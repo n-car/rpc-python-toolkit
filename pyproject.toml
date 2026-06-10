@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rpc-python-toolkit"
+version = "0.1.0"
+description = "Framework-agnostic Python JSON-RPC 2.0 toolkit with Safe Mode interoperability."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [
+  { name = "Nicola Carpanese", email = "nicola.carpanese@gmail.com" }
+]
+keywords = [
+  "json-rpc",
+  "json-rpc-2.0",
+  "rpc",
+  "python",
+  "http",
+  "client",
+  "server",
+  "safe-mode",
+  "iot",
+  "embedded"
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Internet :: WWW/HTTP",
+  "Topic :: Software Development :: Libraries"
+]
+dependencies = [
+  "jsonschema>=4.0.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/n-car/rpc-python-toolkit"
+Repository = "https://github.com/n-car/rpc-python-toolkit"
+Issues = "https://github.com/n-car/rpc-python-toolkit/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
