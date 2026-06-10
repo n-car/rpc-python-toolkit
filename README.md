@@ -106,5 +106,4 @@ Python exposes arbitrary precision integers as `int`. BigInt marker strings from
 
 ## License
 
-MIT.
-
+MIT. See [LICENSE](LICENSE).
