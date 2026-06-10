@@ -216,6 +216,32 @@ class CoreTests(unittest.TestCase):
             server.shutdown()
             server.server_close()
 
+    def test_safe_http_client_batch_preserves_notifications(self):
+        rpc = RpcSafeEndpoint()
+        rpc.add_method("ping", lambda _request, _context, _params: "pong")
+        rpc.add_method("notify.record", lambda _request, _context, _params: {"recorded": True})
+        server, url = _start_server(rpc)
+
+        try:
+            client = RpcSafeClient(url)
+            mixed = client.batch(
+                [
+                    {"method": "ping", "id": 1},
+                    {"method": "notify.record", "params": {"event": "batch-notify"}},
+                ]
+            )
+            self.assertEqual(mixed, ["pong"])
+
+            notification_only = client.batch(
+                [
+                    {"method": "notify.record", "params": {"event": "notification-only"}},
+                ]
+            )
+            self.assertEqual(notification_only, [])
+        finally:
+            server.shutdown()
+            server.server_close()
+
     def test_client_raises_remote_errors_with_data(self):
         rpc = RpcEndpoint()
 
@@ -269,4 +295,3 @@ def _start_server(endpoint: RpcEndpoint) -> tuple[HTTPServer, str]:
 
 if __name__ == "__main__":
     unittest.main()
-

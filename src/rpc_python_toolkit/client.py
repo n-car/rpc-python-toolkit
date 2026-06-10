@@ -61,13 +61,14 @@ class RpcClient:
             }
             if "id" in item:
                 request["id"] = item["id"]
-            else:
-                request["id"] = self._make_id()
             if "params" in item:
                 request["params"] = self._encode(item["params"])
             payload.append(request)
 
         response = self._send(payload, expect_response=True)
+        if not response:
+            return []
+
         responses = response if isinstance(response, list) else [response]
         results = []
         for item in responses:
@@ -143,4 +144,3 @@ class RpcSafeClient(RpcClient):
         options.setdefault("safe_enabled", True)
         options.setdefault("require_safe_header", True)
         super().__init__(url, **options)
-
