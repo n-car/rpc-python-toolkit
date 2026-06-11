@@ -2,11 +2,11 @@
 
 Framework-agnostic JSON-RPC 2.0 toolkit for Python.
 
-This package is the planned Python implementation for the RPC Toolkit ecosystem. It focuses on a small core that can be used directly or adapted later to ASGI/WSGI frameworks such as FastAPI, Starlette, Flask, or Django.
+This package is the early Python implementation for the RPC Toolkit ecosystem. It focuses on a small core that can be used directly or adapted later to ASGI/WSGI frameworks such as FastAPI, Starlette, Flask, or Django.
 
 ## Project Status
 
-Early development scaffold.
+Early development package.
 
 - The PyPI package name `rpc-python-toolkit` is currently unclaimed based on `pip index versions rpc-python-toolkit` returning no matching distribution on 2026-06-11.
 - This package is not published to PyPI yet.
