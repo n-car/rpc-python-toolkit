@@ -2,16 +2,17 @@
 
 Framework-agnostic JSON-RPC 2.0 toolkit for Python.
 
-This package is the early Python implementation for the RPC Toolkit ecosystem. It focuses on a small core that can be used directly or adapted later to ASGI/WSGI frameworks such as FastAPI, Starlette, Flask, or Django.
+Use this package when you need a small Python JSON-RPC 2.0 client/server core that can be embedded directly or adapted to HTTP frameworks. It follows the same protocol conventions used across the RPC Toolkit ecosystem.
 
 ## Project Status
 
-Early development package.
+Small early package with the core JSON-RPC behavior implemented.
 
-- The PyPI package name `rpc-python-toolkit` is currently unclaimed based on `pip index versions rpc-python-toolkit` returning no matching distribution on 2026-06-11.
 - This package is not published to PyPI yet.
+- Install from GitHub or from a local checkout until the first PyPI publication.
 - Standard JSON-RPC 2.0 remains the default behavior.
 - Safe Mode follows the same `X-RPC-Safe-Enabled` and value marker conventions used by `rpc-express-toolkit`.
+- The public API may still change before a stable Python release.
 
 ## Installation
 
@@ -28,7 +29,7 @@ pip install -e .
 python -m unittest discover
 ```
 
-## Current Scope
+## What Is Implemented
 
 - Framework-independent `RpcEndpoint`
 - Standard JSON-RPC calls, notifications, and batch requests
@@ -36,6 +37,13 @@ python -m unittest discover
 - JSON Schema validation through `jsonschema`
 - Optional RPC Toolkit Safe Mode over HTTP headers
 - Method introspection with `__rpc.*` methods
+
+## What Is Not Implemented Yet
+
+- Built-in ASGI/WSGI adapters for FastAPI, Starlette, Flask, or Django
+- Async endpoint handlers
+- OpenRPC export
+- PyPI publication
 
 ## Quick Start
 
@@ -92,6 +100,24 @@ Safe Mode enables `X-RPC-Safe-Enabled` negotiation and recursive value encoding/
 - large integers are encoded as `<digits>n`
 
 Python exposes arbitrary precision integers as `int`. BigInt marker strings from other RPC Toolkit implementations are decoded to Python `int` values when they are real markers, while literal marker-like strings are protected by the `S:` prefix in Safe Mode.
+
+## Examples
+
+Runnable examples are available in [`examples/`](examples/):
+
+- [`basic_server.py`](examples/basic_server.py) - direct endpoint usage without an HTTP adapter.
+- [`basic_client.py`](examples/basic_client.py) - standard HTTP client call against an in-process endpoint.
+- [`schema_validation.py`](examples/schema_validation.py) - method schema validation and JSON-RPC error output.
+- [`safe_mode.py`](examples/safe_mode.py) - `RpcSafeClient` to `RpcSafeEndpoint` round-trip for strings, dates, and large integers.
+
+For local checkout usage:
+
+```bash
+PYTHONPATH=src python3 examples/basic_server.py
+PYTHONPATH=src python3 examples/basic_client.py
+PYTHONPATH=src python3 examples/schema_validation.py
+PYTHONPATH=src python3 examples/safe_mode.py
+```
 
 ## Related Projects
 
