@@ -1,12 +1,18 @@
 # RPC Python Toolkit
 
+[![CI](https://github.com/n-car/rpc-python-toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/n-car/rpc-python-toolkit/actions/workflows/ci.yml)
+[![PyPI Version](https://img.shields.io/pypi/v/rpc-python-toolkit.svg)](https://pypi.org/project/rpc-python-toolkit/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/rpc-python-toolkit.svg)](https://pypi.org/project/rpc-python-toolkit/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Status](https://img.shields.io/badge/status-alpha-orange.svg)](https://pypi.org/project/rpc-python-toolkit/)
+
 Framework-agnostic JSON-RPC 2.0 toolkit for Python.
 
 Use this package when you need a small Python JSON-RPC 2.0 client/server core that can be embedded directly or adapted to HTTP frameworks. It follows the same protocol conventions used across the RPC Toolkit ecosystem.
 
 ## Project Status
 
-Small early package with the core JSON-RPC behavior implemented.
+Alpha package with the core JSON-RPC behavior implemented.
 
 - Published on PyPI as `rpc-python-toolkit`.
 - Standard JSON-RPC 2.0 remains the default behavior.
