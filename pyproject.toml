@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 authors = [
-  { name = "Nicola Carpanese", email = "nicola.carpanese@gmail.com" }
+  { name = "Nicola Carpanese" }
 ]
 keywords = [
   "json-rpc",

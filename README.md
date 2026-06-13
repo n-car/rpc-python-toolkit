@@ -8,15 +8,20 @@ Use this package when you need a small Python JSON-RPC 2.0 client/server core th
 
 Small early package with the core JSON-RPC behavior implemented.
 
-- This package is not published to PyPI yet.
-- Install from GitHub or from a local checkout until the first PyPI publication.
+- Published on PyPI as `rpc-python-toolkit`.
 - Standard JSON-RPC 2.0 remains the default behavior.
 - Safe Mode follows the same `X-RPC-Safe-Enabled` and value marker conventions used by `rpc-express-toolkit`.
 - The public API may still change before a stable Python release.
 
 ## Installation
 
-Until the first PyPI publication, install from GitHub or from a local checkout:
+Install from PyPI:
+
+```bash
+pip install rpc-python-toolkit
+```
+
+For development snapshots, install from GitHub or from a local checkout:
 
 ```bash
 pip install git+https://github.com/n-car/rpc-python-toolkit.git
@@ -43,7 +48,7 @@ python -m unittest discover
 - Built-in ASGI/WSGI adapters for FastAPI, Starlette, Flask, or Django
 - Async endpoint handlers
 - OpenRPC export
-- PyPI publication
+- Built-in HTTP server adapters
 
 ## Quick Start
 
