@@ -23,6 +23,19 @@ class RpcHttpResponse:
     body: Any | None = None
 
 
+@dataclass(frozen=True)
+class RpcCallContext:
+    """Context used when application state is not a mapping.
+
+    Mapping application contexts are merged with request data for backward
+    compatibility. For other application context types, this wrapper keeps
+    application and request scopes explicit.
+    """
+
+    application: Any
+    request: dict[str, Any]
+
+
 @dataclass
 class MethodConfig:
     handler: Handler
@@ -40,6 +53,8 @@ class RpcEndpoint:
         strict_mode: bool = True,
         enable_introspection: bool = False,
         introspection_prefix: str = "__rpc",
+        enable_batch: bool = True,
+        max_batch_size: int = 100,
         max_serialization_depth: int = 100,
         max_deserialization_depth: int = 100,
     ):
@@ -49,6 +64,8 @@ class RpcEndpoint:
         self.strict_mode = strict_mode
         self.enable_introspection = enable_introspection
         self.introspection_prefix = introspection_prefix
+        self.enable_batch = enable_batch
+        self.max_batch_size = max_batch_size
         self.max_serialization_depth = max_serialization_depth
         self.max_deserialization_depth = max_deserialization_depth
         self.validator = SchemaValidator()
@@ -159,6 +176,29 @@ class RpcEndpoint:
                 make_response(None, error={"code": -32600, "message": "Invalid Request"}),
             )
 
+        if not self.enable_batch:
+            return RpcHttpResponse(
+                200,
+                headers,
+                make_response(
+                    None,
+                    error={"code": -32600, "message": "Batch requests are not enabled"},
+                ),
+            )
+
+        if self.max_batch_size > 0 and len(batch) > self.max_batch_size:
+            return RpcHttpResponse(
+                200,
+                headers,
+                make_response(
+                    None,
+                    error={
+                        "code": -32600,
+                        "message": f"Batch size exceeds maximum of {self.max_batch_size}",
+                    },
+                ),
+            )
+
         responses = []
         for item in batch:
             result = self._process_single(item, context)
@@ -226,10 +266,22 @@ class RpcEndpoint:
         context: dict[str, Any],
         params: Any,
     ) -> Any:
-        result = handler(request, self.context if self.context is not None else context, params)
+        result = handler(request, self._resolve_handler_context(context), params)
         if inspect.isawaitable(result):
             raise RpcError("Async handlers require an async adapter", -32603)
         return result
+
+    def _resolve_handler_context(self, request_context: dict[str, Any]) -> Any:
+        if self.context is None:
+            return request_context
+
+        if isinstance(self.context, dict):
+            return {**self.context, **request_context}
+
+        if request_context:
+            return RpcCallContext(application=self.context, request=request_context)
+
+        return self.context
 
     def _register_introspection_methods(self) -> None:
         prefix = self.introspection_prefix
@@ -255,7 +307,7 @@ class RpcEndpoint:
             f"{prefix}.capabilities",
             lambda _request, _context, _params: {
                 "jsonrpc": "2.0",
-                "batch": True,
+                "batch": self.enable_batch,
                 "notifications": True,
                 "introspection": True,
                 "safeMode": self.safe_enabled,
@@ -311,4 +363,3 @@ class RpcSafeEndpoint(RpcEndpoint):
         options.setdefault("safe_enabled", True)
         options.setdefault("strict_mode", True)
         super().__init__(context, **options)
-

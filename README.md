@@ -61,7 +61,11 @@ python -m unittest discover
 ```python
 from rpc_python_toolkit import RpcEndpoint
 
-rpc = RpcEndpoint(enable_introspection=True)
+rpc = RpcEndpoint(
+    enable_introspection=True,
+    enable_batch=True,
+    max_batch_size=100,
+)
 
 def test(request, context, params):
     return {"ok": True, "params": params}
@@ -77,6 +81,12 @@ response = rpc.handle_payload({
 
 print(response.body)
 ```
+
+Batch can be disabled with `enable_batch=False`. Introspection remains opt-in.
+When both application and request contexts are dictionaries, handlers receive a
+merged dictionary and request values take precedence. For a non-dictionary
+application context plus request data, handlers receive `RpcCallContext` with
+separate `application` and `request` attributes.
 
 Result:
 

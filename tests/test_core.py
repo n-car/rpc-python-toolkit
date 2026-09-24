@@ -8,6 +8,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from rpc_python_toolkit import (
     RpcClient,
+    RpcCallContext,
     RpcEndpoint,
     RpcRemoteError,
     RpcSafeClient,
@@ -67,6 +68,67 @@ class CoreTests(unittest.TestCase):
             response.body,
             [{"jsonrpc": "2.0", "id": "a", "result": {"value": 1}}],
         )
+
+    def test_can_disable_batch_requests(self):
+        rpc = RpcEndpoint(enable_batch=False)
+        rpc.add_method("echo", lambda _request, _context, params: params)
+
+        response = rpc.handle_payload(
+            [{"jsonrpc": "2.0", "method": "echo", "id": 1}]
+        )
+
+        self.assertEqual(response.body["error"]["code"], -32600)
+        self.assertIn("not enabled", response.body["error"]["message"])
+
+    def test_enforces_maximum_batch_size(self):
+        rpc = RpcEndpoint(max_batch_size=1)
+        rpc.add_method("echo", lambda _request, _context, params: params)
+
+        response = rpc.handle_payload(
+            [
+                {"jsonrpc": "2.0", "method": "echo", "id": 1},
+                {"jsonrpc": "2.0", "method": "echo", "id": 2},
+            ]
+        )
+
+        self.assertEqual(response.body["error"]["code"], -32600)
+        self.assertIn("maximum of 1", response.body["error"]["message"])
+
+    def test_merges_application_and_request_mapping_contexts(self):
+        rpc = RpcEndpoint({"service": "orders", "user": "application"})
+        rpc.add_method("context", lambda _request, context, _params: context)
+
+        response = rpc.handle_payload(
+            {"jsonrpc": "2.0", "method": "context", "id": 1},
+            {"user": "request", "request_id": "abc"},
+        )
+
+        self.assertEqual(
+            response.body["result"],
+            {"service": "orders", "user": "request", "request_id": "abc"},
+        )
+
+    def test_preserves_both_context_scopes_for_non_mapping_application_context(self):
+        application = object()
+        rpc = RpcEndpoint(application)
+        captured = []
+
+        def capture_context(_request, context, _params):
+            captured.append(context)
+            return "ok"
+
+        rpc.add_method("context", capture_context)
+
+        response = rpc.handle_payload(
+            {"jsonrpc": "2.0", "method": "context", "id": 1},
+            {"request_id": "abc"},
+        )
+        context = captured[0]
+
+        self.assertEqual(response.body["result"], "ok")
+        self.assertIsInstance(context, RpcCallContext)
+        self.assertIs(context.application, application)
+        self.assertEqual(context.request["request_id"], "abc")
 
     def test_enforces_safe_mode_header_in_strict_mode(self):
         rpc = RpcSafeEndpoint()
