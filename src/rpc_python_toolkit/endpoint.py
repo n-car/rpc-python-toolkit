@@ -57,6 +57,7 @@ class RpcEndpoint:
         max_batch_size: int = 100,
         max_serialization_depth: int = 100,
         max_deserialization_depth: int = 100,
+        sanitize_errors: bool = True,
     ):
         self.context = context
         self.methods: dict[str, MethodConfig] = {}
@@ -68,6 +69,7 @@ class RpcEndpoint:
         self.max_batch_size = max_batch_size
         self.max_serialization_depth = max_serialization_depth
         self.max_deserialization_depth = max_deserialization_depth
+        self.sanitize_errors = sanitize_errors
         self.validator = SchemaValidator()
 
         if self.enable_introspection:
@@ -117,17 +119,13 @@ class RpcEndpoint:
         try:
             request = self._decode_payload(payload)
         except Exception as exc:
+            error = {"code": -32700, "message": "Parse error"}
+            if not self.sanitize_errors:
+                error["data"] = {"message": str(exc)}
             return RpcHttpResponse(
                 200,
                 headers,
-                make_response(
-                    None,
-                    error={
-                        "code": -32700,
-                        "message": "Parse error",
-                        "data": {"message": str(exc)},
-                    },
-                ),
+                make_response(None, error=error),
             )
 
         request_context = context or {}
@@ -211,8 +209,12 @@ class RpcEndpoint:
         return RpcHttpResponse(200, headers, responses)
 
     def _process_single(self, request: Any, context: dict[str, Any]) -> dict[str, Any] | None:
+        # An invalid envelope is not a notification, even when it has no id.
+        # Do not echo an untrusted id until the complete envelope is validated.
+        valid_request = False
         try:
             validate_request_envelope(request)
+            valid_request = True
             client_safe_enabled = self._client_safe_enabled(context)
 
             if self.safe_enabled and self.strict_mode and not self._has_safe_header(context):
@@ -238,23 +240,24 @@ class RpcEndpoint:
                 result=self.serialize_bigints_and_dates(result),
             )
         except RpcError as exc:
-            if isinstance(request, dict) and not has_id(request):
+            if valid_request and not has_id(request):
                 return None
-            request_id = request.get("id") if isinstance(request, dict) else None
+            request_id = request.get("id") if valid_request else None
             return self._make_error_response(request_id, exc)
         except Exception as exc:
-            if isinstance(request, dict) and not has_id(request):
+            if valid_request and not has_id(request):
                 return None
-            request_id = request.get("id") if isinstance(request, dict) else None
+            request_id = request.get("id") if valid_request else None
             return self._make_error_response(request_id, RpcError(str(exc), -32603))
 
     def _make_error_response(self, request_id: Any, error: RpcError) -> dict[str, Any]:
+        internal_error = self.sanitize_errors and error.code == -32603
         body = {
             "code": error.code,
-            "message": str(error),
+            "message": "Internal error" if internal_error else str(error),
         }
 
-        if error.data is not None:
+        if not internal_error and error.data is not None:
             body["data"] = self.serialize_bigints_and_dates(error.data)
 
         return make_response(request_id, error=body)
@@ -339,7 +342,10 @@ class RpcEndpoint:
             payload = payload.decode("utf-8")
 
         if isinstance(payload, str):
-            return json.loads(payload)
+            def reject_non_json_constant(value: str) -> None:
+                raise ValueError(f"Invalid JSON constant: {value}")
+
+            return json.loads(payload, parse_constant=reject_non_json_constant)
 
         return payload
 

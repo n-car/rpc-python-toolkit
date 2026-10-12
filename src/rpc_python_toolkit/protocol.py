@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from .errors import RpcError
@@ -35,8 +36,14 @@ def validate_request_envelope(request: Any) -> None:
         raise RpcError("Method not specified or invalid", -32600)
 
     if "params" in request and not isinstance(request["params"], (dict, list)):
-        raise RpcError("Invalid params", -32602)
+        raise RpcError("Invalid params container", -32600)
 
-    if "id" in request and not isinstance(request["id"], (str, int, float, type(None))):
-        raise RpcError("Invalid request id", -32600)
+    if "id" in request:
+        request_id = request["id"]
+        if (
+            isinstance(request_id, bool)
+            or not isinstance(request_id, (str, int, float, type(None)))
+            or (isinstance(request_id, float) and not math.isfinite(request_id))
+        ):
+            raise RpcError("Invalid request id", -32600)
 
